@@ -1,0 +1,49 @@
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    container_name: mssql_server
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_PID: "Developer"
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql_data:/var/opt/mssql
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: api_server
+    environment:
+      - DOTNET_RUNNING_IN_CONTAINER=true
+    volumes:
+      - ./keys:/root/.aspnet/DataProtection-Keys
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mssql
+    networks:
+      - my_network
+
+  frontend:
+    build:
+      context: ./equipment-tracker-frontend
+      dockerfile: Dockerfile
+    container_name: frontend_server
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
+    networks:
+      - my_network
+
+volumes:
+  mssql_data:
+
+networks:
+  my_network:
+    driver: bridge
+
+
+
